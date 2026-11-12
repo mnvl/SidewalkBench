@@ -182,6 +182,9 @@ class SceneCfg(InteractiveSceneCfg):
         update_latest_camera_pose=True,
     )
 
+    # The right eye of a robot with a stereo pair (RobotProfile.stereo_baseline); set by env_setup.py.
+    camera_right: CameraCfg | None = None
+
     # Optional free goal camera (pose set explicitly from the goal). Populated by
     # the environment only when a goal image is needed.
     goal_camera: CameraCfg | None = None

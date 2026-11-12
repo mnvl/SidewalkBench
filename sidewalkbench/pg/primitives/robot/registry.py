@@ -24,6 +24,11 @@ class RobotProfile:
     wheel_joint_pattern: str | None = None
     wheel_radius: float | None = None
     wheel_direction: float = 1.0
+    # The front camera's image size; ``camera_intrinsics`` are at this size.
+    camera_width_px: int = 512
+    camera_height_px: int = 288
+    # A stereo pair: ``camera_offset`` is the left eye, the right one this far to its right [m].
+    stereo_baseline: float | None = None
 
     def as_dict(self) -> dict:
         return dict(bbox=list(self.bbox), height_offset=self.height_offset,
@@ -60,6 +65,15 @@ ROBOT_PROFILES = {
         "base_link", (0.37646, 0.0, 0.03738),
         (210.67, 0.0, 256.0, 0.0, 210.67, 144.0, 0.0, 0.0, 1.0),
         ".*wheel.*", ".*_wheel_joint", 0.09, -1.0),
+    # The mobile-robotics project's sidewalk robot (primitives/robot/mr.py): a 0.40 x 0.30 x 0.40 m box
+    # resting on the ground, a 0.09 m stereo pair at 320x240, fx 270, on the centre of its front panel
+    # 0.25 m up. The MR model refuses to run unless the scene built from these matches the robot its
+    # policy was trained on (mr_isaac.scene_check).
+    "mr": RobotProfile(
+        "mr", (0.40, 0.30, 0.40), 0.20, 0.25,
+        "", (0.20, 0.045, 0.05),
+        (270.0, 0.0, 160.0, 0.0, 270.0, 120.0, 0.0, 0.0, 1.0), ".*",
+        camera_width_px=320, camera_height_px=240, stereo_baseline=0.09),
 }
 
 
@@ -73,6 +87,10 @@ def get_robot_profile(name: str) -> RobotProfile:
 def get_robot_configs(name: str):
     """Return a fresh articulation config and (v, w) action config."""
     get_robot_profile(name)
+    if name == "mr":
+        from .mr import MR_CFG, MRActionsCfg
+
+        return MR_CFG.copy(), MRActionsCfg()
     if name == "coco":
         from .coco import COCO_CFG, COCOWaypointActionsCfg
 

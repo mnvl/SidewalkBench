@@ -1,0 +1,7 @@
+model_type: MR
+terrain_type: intersection
+terrain_segment: corner
+num_peds_per_terrain: 0
+scenario_type: empty
+# MR is a point-goal policy: the goal is part of its observation.
+use_goal: true

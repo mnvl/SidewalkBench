@@ -2,6 +2,7 @@
 
 # launch omniverse
 import argparse
+import copy
 import os
 import sys
 from glob import glob
@@ -153,6 +154,9 @@ from sidewalkbench.pg.primitives.robot.coco import (
 from sidewalkbench.pg.primitives.robot.registry import get_robot_configs, get_robot_profile
 
 robot_profile = get_robot_profile(args_cli.robot_type)
+if args_cli.robot_type == "mr" and args_cli.kinematics_only:
+    # mr is kinematic already, about its own pivot; the flag would swap in coco's action, which turns about the root.
+    parser.error("--kinematics_only does not apply to --robot_type mr, which is always kinematic")
 robot_asset_cfg, robot_actions_cfg = get_robot_configs(args_cli.robot_type)
 
 
@@ -291,8 +295,8 @@ class BaseEnvCfg(ManagerBasedRLEnvCfg):
 
         self.num_rerenders_on_reset = 5
 
-        self.scene.camera.height = 288
-        self.scene.camera.width = 512
+        self.scene.camera.height = robot_profile.camera_height_px
+        self.scene.camera.width = robot_profile.camera_width_px
         if args_cli.free_view:
 
             @configclass
@@ -383,7 +387,9 @@ class BaseEnvCfg(ManagerBasedRLEnvCfg):
         # del self.rewards.arrive_reward
         # del self.rewards.out_of_region_penalty
         # del self.rewards.final_progress_reward
-        self.scene.camera.prim_path = f"{{ENV_REGEX_NS}}/Robot/{robot_profile.camera_link}/front_cam"
+        # A robot without links (mr, a rigid box) carries its cameras on the root prim itself.
+        camera_parent = "{ENV_REGEX_NS}/Robot" + (f"/{robot_profile.camera_link}" if robot_profile.camera_link else "")
+        self.scene.camera.prim_path = f"{camera_parent}/front_cam"
         self.scene.camera.offset = CameraCfg.OffsetCfg(
             pos=robot_profile.camera_offset, rot=(0.5, -0.5, 0.5, -0.5), convention="ros"
         )
@@ -393,22 +399,36 @@ class BaseEnvCfg(ManagerBasedRLEnvCfg):
 
         self.scene.camera.spawn = sim_utils.PinholeCameraCfg.from_intrinsic_matrix(
             intrinsic_matrix=robot_cfg["camera_intrinsics"].flatten().tolist(),
-            width=512,
-            height=288,
+            width=robot_profile.camera_width_px,
+            height=robot_profile.camera_height_px,
         )
+        # A stereo pair: the right eye, level like the left one, a baseline to its right.
+        if robot_profile.stereo_baseline is not None:
+            x, y, z = robot_profile.camera_offset
+            self.scene.camera_right = CameraCfg(
+                prim_path=f"{camera_parent}/front_cam_right",
+                update_period=self.scene.camera.update_period,
+                height=robot_profile.camera_height_px,
+                width=robot_profile.camera_width_px,
+                data_types=["rgb"],
+                spawn=copy.deepcopy(self.scene.camera.spawn),
+                offset=CameraCfg.OffsetCfg(pos=(x, y - robot_profile.stereo_baseline, z),
+                                           rot=self.scene.camera.offset.rot, convention="ros"),
+                update_latest_camera_pose=True,
+            )
         # Optional free goal camera. Its world pose is set explicitly from the
         # current goal, so it has an identity offset and does not track a body.
         if vis_requested(args_cli) or (pg_config.get("use_goal", False) and model.goal_type == "image"):
             self.scene.goal_camera = CameraCfg(
                 prim_path="{ENV_REGEX_NS}/GoalCam",
                 update_period=0.005,
-                height=288,
-                width=512,
+                height=robot_profile.camera_height_px,
+                width=robot_profile.camera_width_px,
                 data_types=["rgb"],
                 spawn=sim_utils.PinholeCameraCfg.from_intrinsic_matrix(
                     intrinsic_matrix=robot_cfg["camera_intrinsics"].flatten().tolist(),
-                    width=512,
-                    height=288,
+                    width=robot_profile.camera_width_px,
+                    height=robot_profile.camera_height_px,
                 ),
                 offset=CameraCfg.OffsetCfg(pos=(0.0, 0.0, 0.0), rot=(0.5, -0.5, 0.5, -0.5), convention="ros"),
                 update_latest_camera_pose=False,

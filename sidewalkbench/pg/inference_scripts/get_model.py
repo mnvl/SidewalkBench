@@ -1,5 +1,5 @@
 from sidewalkbench.models.base_model import ControllerCfg
-model_types = ['CityWalker', 'FlowPilot', 'Cosmos3', 'InternVLA_N1', 'MBRA', 'MIMIC', 'NoMaD', 'S2E', 'ViNT', 'Keyboard']
+model_types = ['CityWalker', 'FlowPilot', 'Cosmos3', 'InternVLA_N1', 'MBRA', 'MIMIC', 'NoMaD', 'S2E', 'ViNT', 'Keyboard', 'MR']
 
 def get_model(model_type: str, controller: ControllerCfg | None=None):
     if model_type not in model_types:
@@ -31,6 +31,11 @@ def get_model(model_type: str, controller: ControllerCfg | None=None):
     elif model_type == 'ViNT':
         from sidewalkbench.models.ViNT.inference import VintGLOfficialNavigator
         return VintGLOfficialNavigator(controller=controller)
+    elif model_type == 'MR':
+        # The mobile-robotics project's policy, served from its own interpreter: rl/sidewalkbench/isaac on
+        # PYTHONPATH and MR_POLICY_SOCKET set, as its rl.sidewalkbench.evaluate runs it.
+        from mr_isaac.navigator import MRNavigator
+        return MRNavigator(controller=controller)
     elif model_type == 'Keyboard':
         from sidewalkbench.pg.inference_scripts.keyboard import KeyboardNavigator
         return KeyboardNavigator()
