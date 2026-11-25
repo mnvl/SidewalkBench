@@ -71,6 +71,12 @@ parser.add_argument(
     type=int,
     help="Seed for terrain texture sampling (default: config value, or 21).",
 )
+parser.add_argument(
+    "--untextured_pedestrians",
+    action="store_true",
+    default=False,
+    help="Pedestrians of one grey, without the SMPLitex textures. Only for MR, which reads no RGB.",
+)
 
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
@@ -78,6 +84,8 @@ import yaml
 
 with open(args_cli.config) as f:
     env_config: dict = yaml.safe_load(f)
+if args_cli.untextured_pedestrians and env_config["model_type"] != "MR":
+    parser.error(f"--untextured_pedestrians is for MR, which reads no RGB; {env_config['model_type']} sees the pedestrians")
 
 try:
     args_cli.sidewalk_width = float(
@@ -214,6 +222,7 @@ pg_config = dict(
     # Sample all texture pools on each env-0 reset unless fixed textures are requested.
     use_fixed_texture=args_cli.use_fixed_texture,
     terrain_texture_seed=args_cli.texture_seed,
+    untextured_pedestrians=args_cli.untextured_pedestrians,
 )
 
 ## setup model

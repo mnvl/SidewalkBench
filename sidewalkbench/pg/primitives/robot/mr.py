@@ -14,11 +14,12 @@ action:
   top speed.
 
 The cameras sit on the box's front face, so the box is behind their near
-plane and they never see it; it stays visible to every other view.  It
-collides and rests on the ground, as coco's kinematic body does, but without
-friction: the action rewrites the velocity every physics step, and friction
-would take ~0.05 m/s off it in each one (mu = 1 over 5 ms), which the robot
-would then report as its own deceleration.
+plane and they never see it; it stays visible to every other view.  It has no
+physics contact and no gravity: a box slid over the terrain's triangles is
+kicked and tilted by their edges and does not move as commanded.  The
+benchmark's collisions are its own geometry checks, and the body's height and
+tilt are the MR model's, which stands it on the ground under its four corners
+at every step (``mr_isaac.ground``).
 """
 
 from __future__ import annotations
@@ -44,7 +45,7 @@ MR_CFG = RigidObjectCfg(
     spawn=sim_utils.CuboidCfg(
         size=MR_BOX,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
-            disable_gravity=False,
+            disable_gravity=True,
             retain_accelerations=False,
             linear_damping=0.0,
             angular_damping=0.0,
@@ -53,7 +54,7 @@ MR_CFG = RigidObjectCfg(
             max_depenetration_velocity=1.0,
         ),
         mass_props=sim_utils.MassPropertiesCfg(mass=10.0),
-        collision_props=sim_utils.CollisionPropertiesCfg(),
+        collision_props=sim_utils.CollisionPropertiesCfg(collision_enabled=False),
         # The ground combines friction by multiplying (random_env_cfg.py), so zero here is zero.
         physics_material=sim_utils.RigidBodyMaterialCfg(static_friction=0.0, dynamic_friction=0.0),
     ),

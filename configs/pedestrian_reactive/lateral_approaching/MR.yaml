@@ -1,0 +1,7 @@
+model_type: MR
+terrain_type: intersection
+terrain_segment: straight
+num_peds_per_terrain: 1
+scenario_type: lateral_approaching
+# MR is a point-goal policy: the goal is part of its observation.
+use_goal: true

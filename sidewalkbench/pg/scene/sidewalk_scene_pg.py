@@ -914,6 +914,10 @@ class SidewalkScenePG(InteractiveScene):
                 self.clone_dynamic_textures[tidx] = []
             all_texture_list = sorted(glob("assets/smplx/SMPLitex-textures/*.png"))
             for env_id, (row, col, ped_id) in zip(env_idx, ped_keys):
+                if self.pg_config["untextured_pedestrians"]:
+                    grey = torch.full((len(self.smpl_uv_coords), 3), 0.5, device=self.pre_render_device, dtype=self.dtype)
+                    self.clone_dynamic_textures[int(env_id)].append(grey)
+                    continue
                 texture_path = self.randomization.numpy(row, col, "pedestrian_texture", ped_id).choice(all_texture_list)
                 uv_tex = Image.open(texture_path).convert("RGB")
                 uv_tex = torch.tensor(np.array(uv_tex), device=self.pre_render_device, dtype=self.dtype) / 255.0

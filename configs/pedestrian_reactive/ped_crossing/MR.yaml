@@ -1,0 +1,7 @@
+model_type: MR
+terrain_type: intersection
+terrain_segment: crosswalk
+num_peds_per_terrain: 1
+scenario_type: ped_crossing
+# MR is a point-goal policy: the goal is part of its observation.
+use_goal: true

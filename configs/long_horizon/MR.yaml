@@ -1,0 +1,5 @@
+model_type: MR
+terrain_type: block_sidewalk
+scenario_type: default
+num_peds_per_terrain: 36
+use_goal: true
