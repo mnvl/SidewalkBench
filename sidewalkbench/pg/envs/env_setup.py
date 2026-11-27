@@ -75,7 +75,7 @@ parser.add_argument(
     "--untextured_pedestrians",
     action="store_true",
     default=False,
-    help="Pedestrians of one grey, without the SMPLitex textures. Only for MR, which reads no RGB.",
+    help="Pedestrians of one grey, without the SMPLitex textures. Only for MR, and only when it reads no RGB (its server says).",
 )
 
 AppLauncher.add_app_launcher_args(parser)
@@ -85,7 +85,7 @@ import yaml
 with open(args_cli.config) as f:
     env_config: dict = yaml.safe_load(f)
 if args_cli.untextured_pedestrians and env_config["model_type"] != "MR":
-    parser.error(f"--untextured_pedestrians is for MR, which reads no RGB; {env_config['model_type']} sees the pedestrians")
+    parser.error(f"--untextured_pedestrians is for MR, when it reads no RGB; {env_config['model_type']} sees the pedestrians")
 
 try:
     args_cli.sidewalk_width = float(
@@ -411,15 +411,17 @@ class BaseEnvCfg(ManagerBasedRLEnvCfg):
             width=robot_profile.camera_width_px,
             height=robot_profile.camera_height_px,
         )
-        # A stereo pair: the right eye, level like the left one, a baseline to its right.
+        # A stereo pair: the right eye, level like the left one, a baseline to its right.  Both draw the depth along their
+        # axis too: the walkers are composited into each eye by it (mr_isaac.composite).
         if robot_profile.stereo_baseline is not None:
+            self.scene.camera.data_types = list(self.scene.camera.data_types) + ["distance_to_image_plane"]
             x, y, z = robot_profile.camera_offset
             self.scene.camera_right = CameraCfg(
                 prim_path=f"{camera_parent}/front_cam_right",
                 update_period=self.scene.camera.update_period,
                 height=robot_profile.camera_height_px,
                 width=robot_profile.camera_width_px,
-                data_types=["rgb"],
+                data_types=["rgb", "distance_to_image_plane"],
                 spawn=copy.deepcopy(self.scene.camera.spawn),
                 offset=CameraCfg.OffsetCfg(pos=(x, y - robot_profile.stereo_baseline, z),
                                            rot=self.scene.camera.offset.rot, convention="ros"),

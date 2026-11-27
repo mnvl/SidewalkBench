@@ -66,14 +66,14 @@ ROBOT_PROFILES = {
         (210.67, 0.0, 256.0, 0.0, 210.67, 144.0, 0.0, 0.0, 1.0),
         ".*wheel.*", ".*_wheel_joint", 0.09, -1.0),
     # The mobile-robotics project's sidewalk robot (primitives/robot/mr.py): a 0.40 x 0.30 x 0.40 m box
-    # resting on the ground, a 0.09 m stereo pair at 320x240, fx 270, on the centre of its front panel
-    # 0.25 m up. The MR model refuses to run unless the scene built from these matches the robot its
-    # policy was trained on (mr_isaac.scene_check).
+    # resting on the ground, a 0.09 m stereo pair at 256x192, fx 216 (the pair its policies train on),
+    # on the centre of its front panel 0.25 m up. The MR model refuses to run unless the scene built
+    # from these matches the robot its policy was trained on (mr_isaac.navigator's checks).
     "mr": RobotProfile(
         "mr", (0.40, 0.30, 0.40), 0.20, 0.25,
         "", (0.20, 0.045, 0.05),
-        (270.0, 0.0, 160.0, 0.0, 270.0, 120.0, 0.0, 0.0, 1.0), ".*",
-        camera_width_px=320, camera_height_px=240, stereo_baseline=0.09),
+        (216.0, 0.0, 128.0, 0.0, 216.0, 96.0, 0.0, 0.0, 1.0), ".*",
+        camera_width_px=256, camera_height_px=192, stereo_baseline=0.09),
 }
 
 
